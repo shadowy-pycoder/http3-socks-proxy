@@ -1,0 +1,52 @@
+# Simple HTTP3 to SOCKS5 proxy example
+
+## Flow
+
+```
+Client (Go)
+        |
+        | QUIC / UDP  (HTTP/3)
+        | TLS encrypted
+        v
+127.0.0.1:8989  [HTTP/3 Proxy - quic-go]
+        |
+        | reads r.Host -> "google.com"
+        | sets r.URL.Scheme = "https"
+        | sets r.URL.Host = "google.com:443"
+        |
+        | TCP  (SOCKS5 handshake)
+        v
+127.0.0.1:1080  [SOCKS5 Server]
+        |
+        | UDP ASSOCIATE -> relay addr
+        | wraps QUIC packets in SOCKS5 UDP header
+        |
+        | UDP (QUIC tunneled through SOCKS5)
+        v
+142.250.x.x:443  [google.com]
+        |
+        | HTTP/3 response
+        v
+127.0.0.1:1080  [SOCKS5 relay]
+        |
+        v
+127.0.0.1:8989  [HTTP/3 Proxy]
+        |
+        | io.Copy response body -> client
+        v
+Client
+```
+
+## Usage
+
+Start the srver in one terminal:
+
+```shell
+go run ./cmd/proxy/main.go
+```
+
+Run tle client in another terminal:
+
+```shell
+go run ./cmd/client/main.go
+```
