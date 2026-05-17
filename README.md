@@ -39,13 +39,13 @@ Client
 
 ## Usage
 
-Start the srver in one terminal:
+Start the server in one terminal:
 
 ```shell
 go run ./cmd/proxy/main.go
 ```
 
-Run tle client in another terminal:
+Run the client in another terminal:
 
 ```shell
 go run ./cmd/client/main.go
