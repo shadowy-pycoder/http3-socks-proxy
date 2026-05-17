@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -22,9 +23,12 @@ import (
 )
 
 var (
-	http3Addr  = "127.0.0.1:8989"
-	socks5Addr = "127.0.0.1:1080"
-	client     = http.Client{
+	http3Addr                  = "127.0.0.1:8989"
+	socks5Addr                 = "127.0.0.1:1080"
+	readTimeout  time.Duration = 30 * time.Second
+	writeTimeout time.Duration = 30 * time.Second
+	flushTimeout time.Duration = 10 * time.Millisecond
+	client                     = http.Client{
 		Transport: &http3.Transport{
 			Dial: proxyDialer("socks5://" + socks5Addr),
 			TLSClientConfig: &tls.Config{
@@ -129,17 +133,38 @@ func handleTunnel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
+	rc := http.NewResponseController(w)
+	go func() {
+		for {
+			select {
+			case <-r.Context().Done():
+				return
+			case <-time.Tick(flushTimeout):
+				err := rc.Flush()
+				if err != nil {
+					return
+				}
+				err = rc.SetReadDeadline(time.Now().Add(readTimeout))
+				if err != nil {
+					return
+				}
+				err = rc.SetWriteDeadline(time.Now().Add(writeTimeout))
+				if err != nil {
+					return
+				}
+			}
+		}
+	}()
 	delConnectionHeaders(resp.Header)
 	delHopHeaders(resp.Header)
 	copyHeader(w.Header(), resp.Header)
 	w.WriteHeader(resp.StatusCode)
 	n, err := io.Copy(w, resp.Body)
-	if err != nil {
+	fmt.Printf("Copied %d bytes\n", n)
+	if err != nil && !errors.Is(err, &quic.IdleTimeoutError{}) {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		return
 	}
-	fmt.Printf("Copied %d bytes\n", n)
 }
 
 func proxyDialer(proxyURL string) func(ctx context.Context, addr string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
