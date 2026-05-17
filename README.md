@@ -48,5 +48,6 @@ go run ./cmd/proxy/main.go
 Run the client in another terminal:
 
 ```shell
-go run ./cmd/client/main.go
+# Usage: ./client <proxy> <url>
+go run ./cmd/client/main.go 127.0.0.1:8989 google.com
 ```
