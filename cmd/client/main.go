@@ -35,8 +35,20 @@ func main() {
 		return
 	}
 	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
 	fmt.Println(resp.Status)
-	fmt.Println(string(body))
+	fmt.Println(resp.Proto)
+	buf := make([]byte, 32*1024)
+	for {
+		n, err := resp.Body.Read(buf)
+		if n > 0 {
+			fmt.Println(string(buf[:n]))
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+	}
 }
