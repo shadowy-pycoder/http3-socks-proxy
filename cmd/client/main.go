@@ -71,6 +71,9 @@ func main() {
 	defer resp.Body.Close()
 	fmt.Println(resp.Status)
 	fmt.Println(resp.Proto)
+	if resp.StatusCode != http.StatusOK {
+		return
+	}
 	buf := make([]byte, 32*1024)
 	for {
 		n, err := resp.Body.Read(buf)
