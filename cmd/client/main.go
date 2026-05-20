@@ -34,7 +34,7 @@ OPTIONS:
 	}
 	flag.Parse()
 	if flag.Arg(0) == "" {
-		address = "google.com"
+		address = "www.google.com"
 	} else {
 		address = flag.Arg(0)
 	}

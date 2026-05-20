@@ -10,9 +10,9 @@ Client (Go)
         v
 127.0.0.1:8989  [HTTP/3 Proxy - quic-go]
         |
-        | reads r.Host -> "google.com"
+        | reads r.Host -> "www.google.com"
         | sets r.URL.Scheme = "https"
-        | sets r.URL.Host = "google.com:443"
+        | sets r.URL.Host = "www.google.com:443"
         |
         | TCP  (SOCKS5 handshake)
         v
@@ -66,5 +66,5 @@ go run ./cmd/client/main.go
 Or set options explicitly to connect to arbitrary HTTP3 proxy server:
 
 ```shell
-go run ./cmd/client/main.go -a 127.0.0.1:8080 -u username -p password google.com
+go run ./cmd/client/main.go -a 127.0.0.1:8080 -u username -p password www.google.com
 ```
