@@ -45,13 +45,14 @@ func main() {
 		Transport: &http3.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
+				ClientSessionCache: tls.NewLRUClientSessionCache(100),
 			},
 			Dial: func(ctx context.Context, addr string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
 				return quic.DialAddrEarly(ctx, proxy, tlsCfg, cfg)
 			},
 		},
 	}
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://%s", address), nil)
+	req, err := http.NewRequest(http3.MethodGet0RTT, fmt.Sprintf("https://%s", address), nil)
 	if err != nil {
 		fmt.Println(err)
 		return

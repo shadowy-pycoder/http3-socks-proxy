@@ -54,17 +54,18 @@ func main() {
 			MaxIncomingUniStreams:   100,
 			HandshakeIdleTimeout:    10 * time.Second,
 			DisablePathMTUDiscovery: false,
+			Allow0RTT:               true,
 		},
 	}
-	server.Handler = func() http.HandlerFunc {
+	server.Handler = replayCheck(func() http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			handleTunnel(w, r)
 		}
-	}()
+	}())
 	fmt.Printf("HTTP3 server listening on %s\n", http3Addr)
 	go server.ListenAndServe()
 	fmt.Printf("SOCKS5 server listening on %s\n", socks5Addr)
-	socks5.NewServer().ListenAndServe("tcp", socks5Addr)
+	fmt.Println(socks5.NewServer().ListenAndServe("tcp", socks5Addr))
 }
 
 func generateTLSConfig() (*tls.Config, error) {
@@ -238,4 +239,16 @@ func appendHostToXForwardHeader(header http.Header, host string) {
 		host = strings.Join(prior, ", ") + ", " + host
 	}
 	header.Set("X-Forwarded-For", host)
+}
+
+func replayCheck(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !r.TLS.HandshakeComplete {
+			if r.Method != http.MethodGet && r.Method != http.MethodHead {
+				w.WriteHeader(http.StatusTooEarly)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
