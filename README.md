@@ -48,6 +48,23 @@ go run ./cmd/proxy/main.go
 Run the client in another terminal:
 
 ```shell
-# Usage: ./client <proxy> <url>
-go run ./cmd/client/main.go 127.0.0.1:8989 google.com
+Usage: client [-a PROXY -u USERNAME -p PASSWORD] URL
+OPTIONS:
+  -h    show this help message and exit
+  -a string
+        proxy address (default "127.0.0.1:8989")
+  -p string
+        proxy password
+  -u string
+        proxy username
+```
+
+```shell
+go run ./cmd/client/main.go
+```
+
+Or set options explicitly to connect to arbitrary HTTP3 proxy server:
+
+```shell
+go run ./cmd/client/main.go -a 127.0.0.1:8080 -u username -p password google.com
 ```
